@@ -1,26 +1,40 @@
-name: Build Flutter APK
+name: Build Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: subosito/flutter-action@v2
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.x'
           channel: 'stable'
-          
-      - run: flutter pub get
-      
-      # بناء الـ APK بشكل خفيف ومخصص لمعمارية معينة أو بشكل عام
-      - run: flutter build apk --release
-      
-      - uses: actions/upload-artifact@v4
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --split-per-abi --obfuscate --split-debug-info=build/app/outputs/symbols
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: release-apks
           path: build/app/outputs/flutter-apk/*.apk
